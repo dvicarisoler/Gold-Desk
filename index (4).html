@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gold Desk</title>
+
+<!-- installable app -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A1511">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gold Desk">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{
+  --bg:#1A1511;--card:#241E18;--card-2:#2E2721;--card-3:#392F26;
+  --screen:#1B1C21;
+  --ink:#F4ECE2;--soft:#B7A794;--faint:#7D6F60;
+  --gold:#E8B34A;--gold-deep:#C9932F;
+  --bull:#4C9AF5;--bull-soft:rgba(76,154,245,.15);
+  --bear:#8E94A3;--bear-soft:rgba(142,148,163,.14);
+  --up:#7BC49A;--down:#E8836F;--warn:#E8A85C;
+  --r-lg:20px;--r-md:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Manrope',ui-rounded,-apple-system,'Segoe UI',sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:70px}
+.disp{font-family:'Bricolage Grotesque','Manrope',sans-serif;font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit;font-size:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+
+.top{padding:20px 0 8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.blob{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#F7D27E,#C9932F 60%,#8A6218)}
+.logo b{font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.logo span{font-size:13px;color:var(--faint)}
+.chip{margin-left:auto;display:flex;align-items:center;gap:12px;background:var(--card);border-radius:999px;padding:7px 16px 7px 12px;flex-wrap:wrap}
+.dots{display:flex;gap:4px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--card-3)}
+.dot.win{background:var(--up)}.dot.loss{background:var(--down)}
+.dot.flat{background:var(--faint)}.dot.wait{background:transparent;box-shadow:inset 0 0 0 1.5px var(--card-3)}
+.chip-t{font-size:13px;color:var(--soft)}.chip-t b{color:var(--ink);font-weight:600}
+
+.price-card{background:linear-gradient(150deg,#2B241C,#241E18 55%);border-radius:var(--r-lg);
+  padding:24px 26px 20px;margin-top:12px;display:flex;align-items:flex-end;gap:30px;flex-wrap:wrap;position:relative;overflow:hidden}
+.price-card:after{content:"";position:absolute;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,179,74,.11),transparent 68%);pointer-events:none}
+.p-label{font-size:13px;color:var(--soft);margin-bottom:2px}
+.p-val{font-family:'Bricolage Grotesque',sans-serif;font-size:50px;font-weight:700;line-height:1;letter-spacing:-.02em;transition:color .4s}
+.p-val.up{color:var(--bull)}.p-val.down{color:var(--bear)}
+.p-chg{font-size:14px;margin-top:5px;color:var(--soft)}
+.p-side{margin-left:auto;display:flex;gap:26px;flex-wrap:wrap;position:relative;z-index:1}
+.side{min-width:92px}
+.side-k{font-size:12px;color:var(--faint);margin-bottom:1px}
+.side-v{font-size:19px;font-weight:600}
+.cd-wrap{margin-top:16px;width:100%;position:relative;z-index:1}
+.cd-rail{height:5px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.cd-fill{height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold));border-radius:999px;width:0%;transition:width .95s linear}
+.cd-txt{font-size:12px;color:var(--faint);margin-top:6px}
+
+.card{background:var(--card);border-radius:var(--r-lg);overflow:hidden;margin-top:14px}
+.card-hd{padding:16px 22px 0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.card-hd h3{font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600}
+.card-bd{padding:16px 22px 22px}
+
+.pills{display:flex;gap:6px;margin-left:auto;background:var(--card-2);padding:4px;border-radius:999px}
+.pill{padding:5px 13px;border-radius:999px;font-size:13px;color:var(--soft);font-weight:500}
+.pill:hover{color:var(--ink)}
+.pill.on{background:var(--gold);color:#2A2014;font-weight:700}
+.lvbtn{padding:6px 15px;border-radius:999px;font-size:13px;font-weight:600;background:var(--card-2);color:var(--soft)}
+.lvbtn.on{background:var(--bull-soft);color:var(--bull)}
+.vtog{display:flex;gap:5px;background:var(--card-2);padding:4px;border-radius:999px}
+.vtog button{padding:5px 14px;border-radius:999px;font-size:13px;color:var(--soft);font-weight:600}
+.vtog button.on{background:var(--card-3);color:var(--ink)}
+.tvpills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tvp{padding:5px 13px;border-radius:999px;font-size:13px;background:var(--card-2);color:var(--soft);font-weight:500}
+.tvp.on{background:var(--bull-soft);color:var(--bull);font-weight:700}
+#tvhost{height:460px;border-radius:var(--r-md);overflow:hidden;background:var(--screen)}
+@media(max-width:720px){#tvhost{height:380px}}
+.tvnote{font-size:12.5px;color:var(--faint);margin-top:10px;line-height:1.6}
+#calhost{border-radius:var(--r-md);overflow:hidden;min-height:380px}
+
+#chart{height:376px;width:100%;border-radius:var(--r-md);overflow:hidden;background:var(--screen)}
+.chartrow{display:grid;grid-template-columns:1fr 236px;gap:14px;align-items:start}
+@media(max-width:900px){.chartrow{grid-template-columns:1fr}}
+@media(max-width:720px){#chart{height:280px}.p-val{font-size:40px}}
+
+#sessions{background:var(--card-2);border-radius:var(--r-md);padding:14px 15px}
+.ses-hd{font-size:12.5px;color:var(--faint);margin-bottom:11px}
+.ses{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.ses:last-of-type{border-bottom:none}
+.ses-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;opacity:.28;transition:opacity .3s}
+.ses.live .ses-dot{opacity:1;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.ses-mid{flex:1;min-width:0}
+.ses-name{font-size:14px;font-weight:600;color:var(--faint);display:flex;align-items:center;gap:7px}
+.ses.live .ses-name{color:var(--ink)}
+.ses-live{font-size:10px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.08)}
+.ses-time{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;margin-top:1px}
+.ses-cd{font-size:12px;color:var(--faint);text-align:right;font-variant-numeric:tabular-nums;flex-shrink:0}
+.ses.live .ses-cd{color:var(--soft)}
+.ses-note{font-size:12.5px;line-height:1.5;margin-top:11px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.045);color:var(--soft)}
+.ses-note b{color:var(--gold)}
+
+.s24{margin-top:13px}
+.s24-lbl{font-size:11.5px;color:var(--faint);margin-bottom:6px}
+.s24-track{position:relative;height:34px}
+.s24-row{position:relative;height:6px;margin-bottom:3px;background:rgba(255,255,255,.05);border-radius:999px}
+.s24-seg{position:absolute;top:0;height:100%;border-radius:999px;opacity:.75}
+.s24-now{position:absolute;top:-2px;bottom:-2px;width:1.5px;background:var(--ink);opacity:.85;pointer-events:none}
+.s24-ticks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--faint);margin-top:4px;font-variant-numeric:tabular-nums}
+
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin-top:12px}
+.read{background:var(--card-2);border-radius:var(--r-md);padding:11px 14px}
+.read-k{font-size:12px;color:var(--faint);margin-bottom:1px}
+.read-v{font-size:14.5px;font-weight:600;line-height:1.4}
+
+.big{width:100%;padding:17px;border-radius:999px;background:var(--gold);color:#2A2014;font-weight:700;font-size:16px;
+  margin-top:14px;transition:transform .12s,background .15s;font-family:'Bricolage Grotesque',sans-serif}
+.big:hover{background:#F2C05C}
+.big:active{transform:scale(.985)}
+.big:disabled{background:var(--card-3);color:var(--faint);cursor:wait}
+.big.ghost{background:var(--card-3);color:var(--ink)}
+.big.ghost:hover{background:#453A2E}
+.sub{font-size:13px;color:var(--faint);text-align:center;margin-top:9px}
+
+.fact{background:var(--card-2);border-radius:var(--r-md);padding:12px 15px}
+.fact-k{font-size:12.5px;color:var(--faint);margin-bottom:2px}
+.fact-v{font-size:17px;font-weight:600}
+
+.call-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:4px}
+.call{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;font-weight:800;letter-spacing:-.02em;padding:6px 26px;border-radius:999px;line-height:1.2}
+.call.LONG{background:var(--bull-soft);color:var(--bull)}
+.call.SHORT{background:var(--bear-soft);color:var(--bear)}
+.call.STAND_ASIDE{background:var(--card-2);color:var(--soft)}
+.sure{display:flex;align-items:center;gap:9px}
+.sure-t{font-size:13px;color:var(--faint)}
+.bars{display:flex;gap:4px}
+.bars i{width:20px;height:7px;border-radius:999px;background:var(--card-3);display:block}
+.bars i.on{background:var(--gold)}
+.plan{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.plan .fact{flex:1;min-width:130px}
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+@media(max-width:700px){.reasons{grid-template-columns:1fr}}
+.reason{background:var(--card-2);border-radius:var(--r-md);padding:15px 17px}
+.reason h4{font-size:13.5px;font-weight:700;margin-bottom:6px}
+.reason.b h4{color:var(--bull)}
+.reason.s h4{color:var(--bear)}
+.reason p,.note p{font-size:14px;color:#DACEC0;line-height:1.6}
+.note{background:var(--card-2);border-radius:var(--r-md);padding:15px 17px;margin-top:12px}
+.note h4{font-size:13.5px;font-weight:700;margin-bottom:6px;color:var(--warn)}
+.note.plain h4{color:var(--soft)}
+
+.money{background:linear-gradient(150deg,#2E2721,#241E18);border-radius:var(--r-lg);margin-top:14px;padding:20px 22px 22px}
+.money h3{font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;margin-bottom:3px}
+.money .lead{font-size:14px;color:var(--soft);margin-bottom:16px}
+.f{margin-bottom:14px}
+.f label{display:block;font-size:14px;color:var(--soft);margin-bottom:7px}
+.f input{width:100%;padding:13px 15px;background:rgba(0,0,0,.22);border:1.5px solid transparent;border-radius:var(--r-md);color:var(--ink);font-size:16px;font-weight:600}
+.f input:focus{border-color:var(--gold-deep);background:rgba(0,0,0,.3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:5px;background:rgba(0,0,0,.22);padding:5px;border-radius:999px}
+.seg button{flex:1;padding:10px;border-radius:999px;font-size:14px;color:var(--soft);font-weight:500}
+.seg button.on{background:var(--card-3);color:var(--ink);font-weight:700}
+.seg button.on.l{color:var(--bull)}
+.seg button.on.s{color:var(--bear)}
+.oc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.oc{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+.o{border-radius:var(--r-md);padding:16px 18px}
+.o.good{background:rgba(123,196,154,.11)}
+.o.bad{background:rgba(232,131,111,.11)}
+.o-k{font-size:13px;color:var(--soft);margin-bottom:3px}
+.o-v{font-family:'Bricolage Grotesque',sans-serif;font-size:27px;font-weight:700;line-height:1.15}
+.o.good .o-v{color:var(--up)}
+.o.bad .o-v{color:var(--down)}
+.o-s{font-size:13px;color:var(--faint);margin-top:3px}
+
+.msg{padding:15px 18px;border-radius:var(--r-md);font-size:14px;line-height:1.6;margin-top:12px}
+.msg.err{background:rgba(232,131,111,.13);color:#F3B7A9}
+.msg.info{background:var(--card-2);color:var(--soft)}
+.spin{display:inline-block;width:13px;height:13px;border:2.5px solid var(--card-3);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:9px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.hist{display:flex;flex-direction:column;gap:8px}
+.h-row{display:flex;align-items:center;gap:14px;background:var(--card-2);border-radius:var(--r-md);padding:12px 16px;flex-wrap:wrap}
+.h-call{padding:4px 13px;border-radius:999px;font-size:13px;font-weight:700}
+.h-call.LONG{background:var(--bull-soft);color:var(--bull)}
+.h-call.SHORT{background:var(--bear-soft);color:var(--bear)}
+.h-call.STAND_ASIDE{background:var(--card-3);color:var(--soft)}
+.h-when{font-size:13.5px;color:var(--soft)}
+.h-px{font-size:13.5px;color:var(--faint)}
+.h-res{margin-left:auto;font-size:14px;font-weight:600}
+.h-res.win{color:var(--up)}.h-res.loss{color:var(--down)}
+.h-res.flat,.h-res.pending{color:var(--faint);font-weight:500}
+.empty{padding:8px 0 4px;color:var(--soft);font-size:14px;line-height:1.6}
+.tiny{font-size:13px;color:var(--faint);text-decoration:underline;text-underline-offset:4px}
+.tiny:hover{color:var(--gold)}
+.foot{margin-top:26px;font-size:13px;color:var(--faint);line-height:1.7}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="logo"><div class="blob"></div><b>Gold Desk</b><span>practice only</span></div>
+    <div class="chip"><div class="dots" id="dots"></div><div class="chip-t" id="record">Nothing scored yet</div></div>
+  </div>
+
+  <div class="price-card">
+    <div>
+      <div class="p-label">Gold price</div>
+      <div class="p-val disp" id="price">----.--</div>
+      <div class="p-chg num" id="chg">connecting…</div>
+    </div>
+    <div class="p-side">
+      <div class="side"><div class="side-k">Next candle in</div><div class="side-v num" id="cd">--:--</div></div>
+      <div class="side"><div class="side-k">ATR — usual move</div><div class="side-v num" id="atrv">--</div></div>
+      <div class="side"><div class="side-k">Spot XAU</div><div class="side-v num" id="spotv">--</div></div>
+      <div class="side"><div class="side-k">Price feed</div><div class="side-v" id="feed" style="font-size:16px">…</div></div>
+    </div>
+    <div class="cd-wrap">
+      <div class="cd-rail"><div class="cd-fill" id="cdbar"></div></div>
+      <div class="cd-txt">Bar fills up as the candle closes</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <h3>Chart</h3>
+      <div class="vtog" id="vtog">
+        <button data-v="live" class="on">Live data</button>
+        <button data-v="tv">TradingView</button>
+      </div>
+      <div class="vtog" id="stog">
+        <button data-s="xau" class="on">Real gold</button>
+        <button data-s="paxg">PAXG</button>
+      </div>
+      <button class="lvbtn on" id="lvbtn">Levels on</button>
+      <div class="pills" id="tfs">
+        <button class="pill" data-tf="1m">1m</button>
+        <button class="pill" data-tf="5m">5m</button>
+        <button class="pill on" data-tf="15m">15m</button>
+        <button class="pill" data-tf="1h">1h</button>
+        <button class="pill" data-tf="4h">4h</button>
+        <button class="pill" data-tf="1d">1D</button>
+      </div>
+    </div>
+    <div class="card-bd">
+      <div id="liveview">
+        <div class="chartrow">
+          <div id="chart"></div>
+          <div id="sessions">
+            <div class="ses-hd">Market sessions <span id="sesnow" style="float:right"></span></div>
+            <div id="seslist"></div>
+            <div class="s24">
+              <div class="s24-lbl">Your day, midnight to midnight</div>
+              <div class="s24-track" id="s24track"></div>
+              <div class="s24-ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+            </div>
+            <div id="sesnote"></div>
+          </div>
+        </div>
+        <div class="reads" id="reads"></div>
+      </div>
+      <div id="tvview" class="hidden">
+        <div class="tvpills" id="tvsyms">
+          <button class="tvp on" data-sym="OANDA:XAUUSD">XAU/USD spot</button>
+          <button class="tvp" data-sym="TVC:GOLD">TVC Gold</button>
+            <button class="tvp" data-sym="BINANCE:PAXGUSDT">PAXG (what the app uses)</button>
+        </div>
+        <div id="tvhost"></div>
+        <div class="tvnote">This is TradingView's own embed, so it's the real interface — drawing tools, indicators, everything. It runs in a sealed frame though, so the app can't read prices out of it. The gap detection, liquidity levels and the AI all still run off the Live data view. Compare XAU/USD against PAXG here to see how tightly they track.</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="big" id="go">Analyse gold now</button>
+  <div class="sub">No details needed yet. Just tells you what it thinks.</div>
+
+  <div id="out"></div>
+
+  <div class="money hidden" id="money">
+    <h3>Now — your money</h3>
+    <div class="lead">Tell it what you're actually doing and it'll spell out what happens.</div>
+    <div class="f">
+      <label>Where are you right now?</label>
+      <div class="seg" id="seg">
+        <button data-st="flat" class="on">Not in yet</button>
+        <button data-st="long">Already bought</button>
+        <button data-st="short">Already shorted</button>
+      </div>
+    </div>
+    <div class="two">
+      <div class="f"><label id="lblStake">How much are you putting in?</label><input type="number" id="stake" placeholder="100" step="10"></div>
+      <div class="f hidden" id="entryF"><label>What price did you get in at?</label><input type="number" id="entry" placeholder="0.00" step="0.01"></div>
+    </div>
+    <button class="big ghost" id="explain">Show me what happens</button>
+    <div id="oout"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h3>What's scheduled</h3>
+      <span style="font-size:13px;color:var(--faint);margin-left:auto">US, UK and EU releases — gold's biggest moves are usually on this list</span>
+    </div>
+    <div class="card-bd"><div id="calhost"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><h3>Track record</h3>
+      <div style="margin-left:auto;display:flex;gap:16px">
+        <button class="tiny" id="regrade">Update</button><button class="tiny" id="wipe">Clear</button>
+      </div>
+    </div>
+    <div class="card-bd"><div id="hist"><div class="empty">Every call gets saved here, then checked later against what gold actually did. After a few weeks this tells you whether any of it is worth listening to.</div></div></div>
+  </div>
+
+  <div class="foot">
+    Candles come from PAXG on Binance — a token backed by one ounce of gold in a vault — and get multiplied onto the real XAU/USD spot scale using the live PAXG-to-gold ratio from xaus.com. So the prices you see are real gold prices. The ratio is fixed at the moment the chart loads, so older candles carry today's ratio rather than the one that applied back then; the premium moves slowly so that's a few cents, not dollars. Switch to PAXG on the toggle to see the raw token instead.
+    <br>Gaps, equal highs and lows, structure and candle patterns are all worked out in the code from the actual candles, not guessed by the AI.
+    <br>Practice tool for one person. Not advice.
+  </div>
+</div>
+
+<script>
+"use strict";
+const SYMBOL="PAXGUSDT",REST="https://api.binance.com/api/v3/klines",WSB="wss://stream.binance.com:9443/ws";
+const MODEL="claude-sonnet-5",LSKEY="golddesk.key",LSJ="golddesk.journal";
+const TF_MS={"1m":6e4,"5m":3e5,"15m":9e5,"1h":36e5,"4h":144e5,"1d":864e5};
+const HZ={"1m":36e5,"5m":36e5,"15m":144e5,"1h":432e5,"4h":1728e5,"1d":2592e5};
+
+let tf="15m",candles=[],daily=[],ws=null,chart=null,series=null;
+let lastPx=null,prevPx=null,posState="flat",verdict=null;
+let showLevels=true,lines=[],planLines=[];
+let K=1,scaleMode="xau",spot=null,spotAt=0;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const money=n=>(n<0?"-$":"$")+Math.abs(n).toFixed(2);
+
+/* ================= detection — all deterministic ================= */
+function atr(cs,p=14){
+  if(cs.length<p+1)return null;
+  const tr=[];
+  for(let i=1;i<cs.length;i++){const c=cs[i],q=cs[i-1];
+    tr.push(Math.max(c.high-c.low,Math.abs(c.high-q.close),Math.abs(c.low-q.close)));}
+  let a=tr.slice(0,p).reduce((s,x)=>s+x,0)/p;
+  for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;
+  return a;
+}
+function ema(v,p){
+  if(v.length<p)return null;
+  const k=2/(p+1);let e=v.slice(0,p).reduce((s,x)=>s+x,0)/p;
+  for(let i=p;i<v.length;i++)e=v[i]*k+e*(1-k);
+  return e;
+}
+function allSwings(cs,look=2){
+  const hi=[],lo=[];
+  for(let i=look;i<cs.length-look;i++){
+    let H=true,L=true;
+    for(let j=1;j<=look;j++){
+      if(cs[i].high<=cs[i-j].high||cs[i].high<=cs[i+j].high)H=false;
+      if(cs[i].low>=cs[i-j].low||cs[i].low>=cs[i+j].low)L=false;
+    }
+    if(H)hi.push({i:i,p:+cs[i].high.toFixed(2)});
+    if(L)lo.push({i:i,p:+cs[i].low.toFixed(2)});
+  }
+  return{highs:hi,lows:lo};
+}
+/* Fair value gap: 3-candle imbalance. Bullish = candle1 high below candle3 low.
+   Only kept if price hasn't traded back through it since. */
+function fvgs(cs){
+  const raw=[];
+  for(let i=2;i<cs.length;i++){
+    const a=cs[i-2],c=cs[i];
+    if(a.high<c.low)raw.push({dir:"up",low:+a.high.toFixed(2),high:+c.low.toFixed(2),i:i});
+    if(a.low>c.high)raw.push({dir:"down",low:+c.high.toFixed(2),high:+a.low.toFixed(2),i:i});
+  }
+  const live=raw.filter(g=>{
+    for(let j=g.i+1;j<cs.length;j++){
+      if(g.dir==="up"&&cs[j].low<=g.low)return false;
+      if(g.dir==="down"&&cs[j].high>=g.high)return false;
+    }
+    return (g.high-g.low)>0;
+  });
+  return live.slice(-4).map(g=>({
+    dir:g.dir,low:g.low,high:g.high,
+    size:+(g.high-g.low).toFixed(2),
+    candles_ago:cs.length-1-g.i
+  }));
+}
+/* Equal highs / equal lows — swing points stacked at the same price.
+   These are where stop orders pile up. */
+function pools(cs){
+  const sw=allSwings(cs),tol=(lastPx||cs[cs.length-1].close)*0.0007;
+  const clump=pts=>{
+    if(!pts.length)return[];
+    const s=pts.map(x=>x.p).sort((a,b)=>a-b),g=[],cur=[s[0]];
+    for(let i=1;i<s.length;i++){
+      if(Math.abs(s[i]-cur[cur.length-1])<=tol)cur.push(s[i]);
+      else{g.push(cur.slice());cur.length=0;cur.push(s[i]);}
+    }
+    g.push(cur.slice());
+    return g.filter(x=>x.length>=2)
+      .map(x=>({price:+(x.reduce((a,b)=>a+b,0)/x.length).toFixed(2),touches:x.length}));
+  };
+  return{highs:clump(sw.highs),lows:clump(sw.lows)};
+}
+function structure(cs){
+  const sw=allSwings(cs);
+  const h=sw.highs.slice(-2).map(x=>x.p),l=sw.lows.slice(-2).map(x=>x.p);
+  if(h.length<2||l.length<2)return"not enough swings yet";
+  const hh=h[1]>h[0],hl=l[1]>l[0];
+  if(hh&&hl)return"higher highs, higher lows";
+  if(!hh&&!hl)return"lower highs, lower lows";
+  return"mixed, no clean trend";
+}
+function patterns(cs){
+  const n=cs.length,out=[];
+  if(n<3)return out;
+  const c=cs[n-1],p=cs[n-2];
+  const body=Math.abs(c.close-c.open),range=c.high-c.low;
+  if(c.close>c.open&&p.close<p.open&&c.close>=p.open&&c.open<=p.close)out.push("bullish engulfing");
+  if(c.close<c.open&&p.close>p.open&&c.close<=p.open&&c.open>=p.close)out.push("bearish engulfing");
+  if(c.high<=p.high&&c.low>=p.low)out.push("inside bar");
+  if(range>0&&body/range<0.34){
+    const up=c.high-Math.max(c.open,c.close),dn=Math.min(c.open,c.close)-c.low;
+    if(dn>body*2&&dn>up*1.5)out.push("long lower wick");
+    else if(up>body*2&&up>dn*1.5)out.push("long upper wick");
+  }
+  return out;
+}
+function todayRange(cs){
+  const cut=Date.now()-864e5;let h=-Infinity,l=Infinity;
+  for(const c of cs){if(c.time*1000<cut)continue;h=Math.max(h,c.high);l=Math.min(l,c.low);}
+  return h===-Infinity?null:{high:+h.toFixed(2),low:+l.toFixed(2)};
+}
+function nextNFP(){
+  const n=new Date();
+  for(let m=0;m<2;m++){
+    const d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+m,1,13,30));
+    while(d.getUTCDay()!==5)d.setUTCDate(d.getUTCDate()+1);
+    if(d>n)return d;
+  }
+  return null;
+}
+function dur(ms){
+  if(ms<0)return"—";
+  const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4);
+  if(h>=48)return Math.floor(h/24)+" days";
+  if(h>=1)return h+"h "+m+"m";
+  return m+" min";
+}
+
+/* ================= market sessions ================= */
+/* Real timezone maths via Intl, so London/NY/Sydney DST is handled automatically
+   and Tokyo correctly never shifts. Local open/close hours are the standard
+   FX session convention. */
+const SESSIONS=[
+  {name:"Sydney",   tz:"Australia/Sydney",  open:8, close:17, col:"#C89BE0"},
+  {name:"Tokyo",    tz:"Asia/Tokyo",        open:9, close:18, col:"#E8A85C"},
+  {name:"London",   tz:"Europe/London",     open:8, close:17, col:"#4C9AF5"},
+  {name:"New York", tz:"America/New_York",  open:8, close:17, col:"#5FD0C4"}
+];
+function tzOff(tz,d){
+  const p=new Intl.DateTimeFormat("en-US",{timeZone:tz,hour12:false,
+    year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+    .formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a),{});
+  let hh=+p.hour;if(hh===24)hh=0;
+  return (Date.UTC(+p.year,+p.month-1,+p.day,hh,+p.minute,+p.second)-d.getTime())/6e4;
+}
+function wallToUTC(tz,y,m,d,hh){
+  const g=Date.UTC(y,m-1,d,hh,0);
+  let t=g-tzOff(tz,new Date(g))*6e4;
+  return g-tzOff(tz,new Date(t))*6e4;
+}
+function ymdIn(tz,d){
+  const p=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
+    .formatToParts(d).reduce((a,x)=>(a[x.type]=x.value,a),{});
+  return{y:+p.year,m:+p.month,d:+p.day};
+}
+const wdIn=(tz,ms)=>new Intl.DateTimeFormat("en-US",{timeZone:tz,weekday:"short"}).format(new Date(ms));
+function windowFor(s,k){
+  const p=ymdIn(s.tz,new Date(Date.now()+k*864e5));
+  const startsAt=wallToUTC(s.tz,p.y,p.m,p.d,s.open);
+  const endsAt=wallToUTC(s.tz,p.y,p.m,p.d,s.close);
+  return{startsAt,endsAt,wd:wdIn(s.tz,startsAt)};
+}
+function sesState(s){
+  const now=Date.now();
+  for(let k=-1;k<=5;k++){
+    const w=windowFor(s,k);
+    if(w.wd==="Sat"||w.wd==="Sun")continue;
+    if(now>=w.startsAt&&now<w.endsAt)return{isOpen:true,startsAt:w.startsAt,endsAt:w.endsAt};
+    if(now<w.startsAt)return{isOpen:false,startsAt:w.startsAt,endsAt:w.endsAt};
+  }
+  return{isOpen:false,startsAt:null,endsAt:null};
+}
+function openNow(){return SESSIONS.filter(s=>sesState(s).isOpen).map(s=>s.name);}
+function whoIsTrading(){
+  const o=openNow();
+  if(!o.length)return marketShut()?"Weekend, real gold market shut":"Between sessions, thin";
+  if(o.includes("London")&&o.includes("New York"))return"London + New York overlap, busiest";
+  return o.join(" + ")+" open";
+}
+function marketShut(){
+  if(openNow().length)return false;
+  const nx=SESSIONS.map(s=>sesState(s).startsAt).filter(Boolean).sort((a,b)=>a-b)[0];
+  return nx?(nx-Date.now())>6*36e5:false;
+}
+const hhmm=ms=>new Date(ms).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+function daySegs(s){
+  const n=new Date(),ds=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),de=ds+864e5,out=[];
+  for(let k=-2;k<=2;k++){
+    const w=windowFor(s,k);
+    if(w.wd==="Sat"||w.wd==="Sun")continue;
+    const a=Math.max(w.startsAt,ds),b=Math.min(w.endsAt,de);
+    if(b>a)out.push({l:(a-ds)/864e5*100,w:(b-a)/864e5*100});
+  }
+  return out;
+}
+function paintSessions(){
+  const shut=marketShut();
+  $("sesnow").innerHTML=shut?'<span style="color:var(--warn)">closed</span>'
+    :'<span style="color:var(--bull)">'+openNow().length+" open</span>";
+  $("seslist").innerHTML=SESSIONS.map(s=>{
+    const st=sesState(s);
+    const cd=st.isOpen?(st.endsAt?"closes "+dur(st.endsAt-Date.now()):"")
+      :(st.startsAt?"opens "+dur(st.startsAt-Date.now()):"");
+    const times=st.startsAt?hhmm(st.startsAt)+" – "+hhmm(st.endsAt):"—";
+    return '<div class="ses'+(st.isOpen?" live":"")+'">'+
+      '<span class="ses-dot" style="background:'+s.col+'"></span>'+
+      '<div class="ses-mid"><div class="ses-name">'+s.name+
+        (st.isOpen?'<span class="ses-live" style="color:'+s.col+'">OPEN</span>':"")+"</div>"+
+      '<div class="ses-time">'+times+"</div></div>"+
+      '<div class="ses-cd">'+cd+"</div></div>";
+  }).join("");
+  $("s24track").innerHTML=SESSIONS.map(s=>
+    '<div class="s24-row">'+daySegs(s).map(g=>
+      '<div class="s24-seg" style="left:'+g.l+"%;width:"+g.w+"%;background:"+s.col+'"></div>').join("")+"</div>"
+  ).join("")+'<div class="s24-now" style="left:'+
+    ((Date.now()-new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()).getTime())/864e5*100)+'%"></div>';
+  const o=openNow();
+  let note="";
+  if(shut)note="Real gold is shut for the weekend. PAXG keeps trading, so anything the chart does now is thin and won't carry into Monday. Sit it out.";
+  else if(o.includes("London")&&o.includes("New York"))note="<b>London and New York both open.</b> Deepest liquidity of the day for gold, and where most of the real range gets made.";
+  else if(!o.length)note="Gap between sessions. Volume is low and moves here often reverse when the next session opens.";
+  else if(o.length===1&&o[0]==="Sydney")note="Sydney only. Thinnest part of the day, wide spreads, easy to get wicked out.";
+  $("sesnote").innerHTML=note?'<div class="ses-note">'+note+"</div>":"";
+}
+
+/* ================= real gold calibration ================= */
+/* PAXG gives us a free live feed. XAUS gives us real XAU/USD spot and the exact
+   PAXG-to-gold ratio. Multiply the PAXG candles by that ratio and the chart sits
+   on the real gold scale. K is the factor; 1 means raw PAXG. */
+async function fetchSpot(){
+  try{
+    const r=await fetch("https://xaus.com/api/v1/spot?compact=1");
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    if(!d.spot_usd_oz)throw new Error("no price");
+    spot=d;spotAt=Date.now();
+    paintSpot();
+    return d;
+  }catch(e){spot=null;paintSpot();return null;}
+}
+function factor(){
+  if(scaleMode==="paxg"||!spot)return 1;
+  if(spot.paxg_usd&&spot.paxg_usd>0)return spot.spot_usd_oz/spot.paxg_usd;
+  if(spot.paxg_gold_ratio&&spot.paxg_gold_ratio>0)return 1/spot.paxg_gold_ratio;
+  return 1;
+}
+function paintSpot(){
+  const el=$("spotv");
+  if(!spot){el.textContent="--";el.title="spot unavailable";return;}
+  el.textContent=spot.spot_usd_oz.toFixed(2);
+  const prem=spot.paxg_gold_ratio?((spot.paxg_gold_ratio-1)*100):null;
+  const age=Math.round((Date.now()-spotAt)/1000);
+  el.title="PAXG is "+(prem==null?"?":(prem>=0?"+":"")+prem.toFixed(3)+"%")+
+    " vs spot · checked "+age+"s ago"+(spot.stale?" · source stale":"");
+}
+
+/* ================= data ================= */
+async function getK(iv,limit=400,start=null){
+  let u=REST+"?symbol="+SYMBOL+"&interval="+iv+"&limit="+limit;
+  if(start)u+="&startTime="+start;
+  const r=await fetch(u);
+  if(!r.ok)throw new Error("Binance said "+r.status);
+  return (await r.json()).map(k=>({time:+k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
+}
+async function loadTF(next){
+  tf=next;
+  document.querySelectorAll(".pill").forEach(b=>b.classList.toggle("on",b.dataset.tf===tf));
+  $("feed").textContent="loading";
+  try{
+    await fetchSpot();
+    K=factor();
+    const raw=await getK(tf,400);
+    candles=raw.map(c=>({time:c.time,open:c.open*K,high:c.high*K,low:c.low*K,close:c.close*K,volume:c.volume}));
+    const rawD=await getK("1d",3);
+    daily=rawD.map(c=>({time:c.time,open:c.open*K,high:c.high*K,low:c.low*K,close:c.close*K,volume:c.volume}));
+    series.setData(candles.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
+    chart.timeScale().fitContent();
+    lastPx=candles[candles.length-1].close;
+    clearPlan();paintPrice();drawLevels();paintReads();socket();
+  }catch(e){
+    $("feed").textContent="down";$("feed").style.color="var(--down)";
+    $("out").innerHTML='<div class="msg err"><b>Can\'t reach the price feed.</b><br>'+esc(e.message)+
+      "<br><br>Usually your network blocking Binance. Try another network, or tell me and I'll switch the price source.</div>";
+  }
+}
+function socket(){
+  if(ws){try{ws.onclose=null;ws.close();}catch(e){}}
+  ws=new WebSocket(WSB+"/"+SYMBOL.toLowerCase()+"@kline_"+tf);
+  ws.onopen=()=>{$("feed").textContent="live";$("feed").style.color="var(--bull)";};
+  ws.onerror=()=>{$("feed").textContent="error";$("feed").style.color="var(--down)";};
+  ws.onclose=()=>{$("feed").textContent="retrying";$("feed").style.color="var(--warn)";setTimeout(socket,2500);};
+  ws.onmessage=ev=>{
+    const k=JSON.parse(ev.data).k;
+    const bar={time:+k.t/1000,open:+k.o*K,high:+k.h*K,low:+k.l*K,close:+k.c*K};
+    series.update(bar);
+    prevPx=lastPx;lastPx=+k.c;
+    const full=Object.assign({},bar,{volume:+k.v});
+    const closed=k.x===true;
+    if(candles.length&&candles[candles.length-1].time===bar.time)candles[candles.length-1]=full;
+    else{candles.push(full);if(candles.length>500)candles.shift();}
+    paintPrice();
+    if(closed){drawLevels();paintReads();}
+  };
+}
+
+/* ================= chart levels ================= */
+function clearLines(){lines.forEach(l=>{try{series.removePriceLine(l)}catch(e){}});lines=[];}
+function clearPlan(){planLines.forEach(l=>{try{series.removePriceLine(l)}catch(e){}});planLines=[];}
+function drawLevels(){
+  clearLines();
+  if(!showLevels||!candles.length)return;
+  fvgs(candles).slice(-2).forEach(g=>{
+    const col=g.dir==="up"?"rgba(76,154,245,.75)":"rgba(142,148,163,.75)";
+    [["gap top",g.high],["gap btm",g.low]].forEach(([t,p])=>{
+      lines.push(series.createPriceLine({price:p,color:col,lineWidth:1,lineStyle:2,axisLabelVisible:true,title:t}));
+    });
+  });
+  const pl=pools(candles);
+  const near=(arr)=>arr.slice().sort((a,b)=>Math.abs(a.price-lastPx)-Math.abs(b.price-lastPx))[0];
+  const nh=near(pl.highs),nl=near(pl.lows);
+  if(nh)lines.push(series.createPriceLine({price:nh.price,color:"rgba(232,179,74,.8)",lineWidth:1,lineStyle:0,axisLabelVisible:true,title:nh.touches+"x high"}));
+  if(nl)lines.push(series.createPriceLine({price:nl.price,color:"rgba(232,179,74,.8)",lineWidth:1,lineStyle:0,axisLabelVisible:true,title:nl.touches+"x low"}));
+}
+function drawPlan(v){
+  clearPlan();
+  const add=(p,c,t,dash)=>{if(p)planLines.push(series.createPriceLine({price:p,color:c,lineWidth:dash?1:2,lineStyle:dash?2:0,axisLabelVisible:true,title:t}));};
+  add(v.entry,"#E8B34A","entry");
+  add(v.stop,"#E8836F","stop");
+  add(v.target,"#7BC49A","target");
+  if(v.watch_long){
+    add(v.watch_long.entry,"#4C9AF5","buy limit",true);
+    add(v.watch_long.stop,"#E8836F","",true);
+    add(v.watch_long.target,"#7BC49A","",true);
+  }
+  if(v.watch_short){
+    add(v.watch_short.entry,"#8E94A3","sell stop",true);
+    add(v.watch_short.stop,"#E8836F","",true);
+    add(v.watch_short.target,"#7BC49A","",true);
+  }
+}
+function paintReads(){
+  if(!candles.length)return;
+  const g=fvgs(candles),pl=pools(candles),pt=patterns(candles),nfp=nextNFP();
+  const near=arr=>arr.slice().sort((a,b)=>Math.abs(a.price-lastPx)-Math.abs(b.price-lastPx))[0];
+  const nh=near(pl.highs),nl=near(pl.lows),lastG=g[g.length-1];
+  const R=(k,v)=>'<div class="read"><div class="read-k">'+k+'</div><div class="read-v">'+v+"</div></div>";
+  let out="";
+  out+=R("Structure",structure(candles));
+  out+=R("Nearest unfilled gap",lastG?(lastG.dir==="up"?"bullish ":"bearish ")+lastG.low.toFixed(2)+"–"+lastG.high.toFixed(2):"none open");
+  out+=R("Equal highs above",nh?nh.price.toFixed(2)+" ("+nh.touches+" touches)":"none clean");
+  out+=R("Equal lows below",nl?nl.price.toFixed(2)+" ("+nl.touches+" touches)":"none clean");
+  out+=R("Last candle",pt.length?pt.join(", "):"nothing notable");
+  if(nfp)out+=R("US jobs report in",dur(nfp-Date.now()));
+  $("reads").innerHTML=out;
+}
+
+/* ================= painting ================= */
+function paintPrice(){
+  if(lastPx==null)return;
+  const el=$("price");
+  el.textContent=lastPx.toFixed(2);
+  if(prevPx!=null&&lastPx!==prevPx){
+    el.classList.remove("up","down");void el.offsetWidth;
+    el.classList.add(lastPx>prevPx?"up":"down");
+  }
+  const d=daily[daily.length-2];
+  if(d){
+    const diff=lastPx-d.close,pct=diff/d.close*100;
+    $("chg").textContent=(diff>=0?"+":"")+diff.toFixed(2)+" ("+(diff>=0?"+":"")+pct.toFixed(2)+"%) since yesterday";
+    $("chg").style.color=diff>=0?"var(--bull)":"var(--bear)";
+  }
+  const a=atr(candles);
+  $("atrv").textContent=a?"$"+a.toFixed(2):"--";
+}
+function tick(){
+  if(!candles.length){setTimeout(tick,500);return;}
+  const span=TF_MS[tf],open=candles[candles.length-1].time*1000;
+  const left=Math.max(0,open+span-Date.now()),s=Math.floor(left/1000);
+  $("cd").textContent=s>=3600?Math.floor(s/3600)+"h "+String(Math.floor(s%3600/60)).padStart(2,"0")+"m"
+    :String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  $("cdbar").style.width=(100-left/span*100)+"%";
+  setTimeout(tick,1000);
+}
+
+/* ================= payload ================= */
+function marketData(){
+  const a=atr(candles),sw=allSwings(candles),tr=todayRange(candles);
+  const cl=candles.map(c=>c.close),d=daily[daily.length-2],nfp=nextNFP(),pl=pools(candles);
+  const recent=candles.slice(-30).map(c=>
+    [new Date(c.time*1000).toISOString().slice(5,16),c.open.toFixed(2),c.high.toFixed(2),c.low.toFixed(2),c.close.toFixed(2)].join(","));
+  return{
+    what:scaleMode==="xau"
+      ?"Gold, XAU/USD spot scale. Candles come from PAXG/USDT on Binance and are calibrated onto real spot using the live PAXG-to-gold ratio, so every price here is a real gold price."
+      :"Gold, raw PAXG/USDT token price on Binance (not spot).",
+    real_spot_xau_usd:spot?spot.spot_usd_oz:null,
+    paxg_premium_pct:spot&&spot.paxg_gold_ratio?+((spot.paxg_gold_ratio-1)*100).toFixed(3):null,
+    timeframe:tf,time_now_utc:new Date().toISOString(),session:whoIsTrading(),
+    price_now:lastPx,
+    atr14:a?+a.toFixed(2):null,
+    ema20:ema(cl,20)?+ema(cl,20).toFixed(2):null,
+    ema50:ema(cl,50)?+ema(cl,50).toFixed(2):null,
+    ema200:ema(cl,200)?+ema(cl,200).toFixed(2):null,
+    structure:structure(candles),
+    today_high_low:tr,
+    yesterday:d?{high:+d.high.toFixed(2),low:+d.low.toFixed(2),close:+d.close.toFixed(2)}:null,
+    unfilled_fair_value_gaps:fvgs(candles),
+    equal_highs_stops_resting_above:pl.highs,
+    equal_lows_stops_resting_below:pl.lows,
+    swing_highs:sw.highs.slice(-5).map(x=>x.p),
+    swing_lows:sw.lows.slice(-5).map(x=>x.p),
+    last_candle_patterns:patterns(candles),
+    us_jobs_report_utc:nfp?nfp.toISOString():null,
+    hours_until_jobs_report:nfp?+((nfp-Date.now())/36e5).toFixed(1):null,
+    last_30_candles:"time,open,high,low,close\n"+recent.join("\n")
+  };
+}
+
+const RULES=`You are the analysis engine in a gold trading app used by one retail trader. He knows the basics — support and resistance, fair value gaps, liquidity resting above equal highs and below equal lows, engulfing candles, inside bars, higher highs and lower lows. Talk to him at that level.
+
+HOW TO WRITE
+Normal sentences, no bullet points, no hedging filler, no disclaimers. Be concrete. Say "there's an unfilled gap at 3412 to 3418 from Tuesday's drop and price is drifting back into it", not "price is showing bullish intent".
+
+USING THE TERMS PROPERLY
+You have been given fair value gaps, equal highs and equal lows, swings and candle patterns that were detected in code from the actual candles. These are real and you can name them and use the numbers.
+Do NOT claim a gap, liquidity pool or pattern exists if it is not in the data you were given. If the gap list is empty, there are no unfilled gaps — say that.
+Do not use unfalsifiable language: no "smart money is accumulating", no "institutions are positioning", no "the market wants to". If you cannot attach a price to a claim, cut the claim.
+Remember these patterns appear in random data too. Point at them, but do not treat them as proof.
+
+WHAT YOU ARE
+You cannot predict gold. What you can do is describe what's actually there, argue both sides honestly, and say what would prove the idea wrong. WAIT is right more often than not, and picking it when nothing is set up is you doing the job well. Being 4 or 5 out of 5 sure should be rare.
+
+RULES
+Every price you output must come from the supplied data — a swing, a gap edge, an equal high or low, today's or yesterday's extreme, an EMA, or an ATR-based distance. Never invent a level.
+Put the stop the other side of a level price has actually reacted to, at least 1x ATR away.
+If reward is under about 1.5x risk, say so and lean WAIT.
+If the US jobs report is under 2 hours away, that outweighs everything. Say so.
+If the news search finds nothing useful, say news is quiet. Don't pad.
+
+WHEN THE CALL IS STAND_ASIDE
+There's usually still something worth watching even when nothing is set up right now. Fill in:
+watch_long — a buy limit order: the price he'd want to be filled at if it pulls back to support first, with its own stop and target. Only fill this in if there's a real support level in the data. Otherwise null.
+watch_short — a sell stop order: the price where a break below a level would justify entering short, with its own stop and target. Only fill this in if there's a real level that would need to break. Otherwise null.
+Both can be null if there's genuinely nothing worth watching either way — don't force one to seem more useful. When call is LONG or SHORT, leave both of these null; the main entry/stop/target already covers it.
+
+OUTPUT — raw JSON only, no code fences, no text around it.
+{
+ "call":"LONG"|"SHORT"|"STAND_ASIDE",
+ "sure":1-5,
+ "entry":number or null,
+ "stop":number or null,
+ "target":number or null,
+ "watch_long":{"entry":number,"stop":number,"target":number,"note":"one short sentence"} or null,
+ "watch_short":{"entry":number,"stop":number,"target":number,"note":"one short sentence"} or null,
+ "headline":"one sentence, max 16 words",
+ "up_case":"2-3 sentences on the long side, naming actual levels",
+ "down_case":"2-3 sentences on the short side, naming actual levels",
+ "wrong_if":"1-2 sentences: the exact price behaviour that kills this idea",
+ "news":"1-3 sentences on what's moving gold now with dates, or say news is quiet",
+ "event":"1 sentence if something is scheduled soon, else empty string"
+}`;
+
+/* ================= api ================= */
+function key(){
+  let k=localStorage.getItem(LSKEY);
+  if(!k){
+    k=prompt("Paste your Anthropic API key (starts with sk-ant-).\n\nSaved only in this browser on this computer, only ever sent to Anthropic.");
+    if(k&&k.trim()){localStorage.setItem(LSKEY,k.trim());return k.trim();}
+    return null;
+  }
+  return k;
+}
+function snippet(t){
+  t=(t||"").trim();
+  return t.length>220?t.slice(0,220)+"…":(t||"(empty)");
+}
+function grabJSON(t){
+  let s=(t||"").trim();
+  // strip ```json ... ``` fences if the model wrapped the answer in one
+  const fence=s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if(fence)s=fence[1].trim();
+  const a=s.indexOf("{"),b=s.lastIndexOf("}");
+  if(a<0||b<0)throw new Error("Didn't get JSON back — here's what it actually said:\n\n\u201c"+snippet(t)+"\u201d");
+  try{
+    return JSON.parse(s.slice(a,b+1));
+  }catch(err){
+    throw new Error("Got a reply but it wasn't valid JSON (probably cut off). Here's what came back:\n\n\u201c"+snippet(t)+"\u201d");
+  }
+}
+async function ask(body){
+  const k=key();
+  if(!k)throw new Error("No key entered, so nothing was sent.");
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify(body)});
+  if(r.status===401){localStorage.removeItem(LSKEY);throw new Error("That key didn't work. Cleared — press again to retype it.");}
+  if(r.status===400){const j=await r.json().catch(()=>null);throw new Error(j&&j.error?j.error.message:"Request rejected.");}
+  if(r.status===429)throw new Error("Too many requests. Wait a minute.");
+  if(!r.ok)throw new Error("Server said "+r.status);
+  const d=await r.json();
+  const text=d.content.filter(c=>c.type==="text").map(c=>c.text).join("\n");
+  return{text,stopReason:d.stop_reason,raw:d};
+}
+
+/* ================= step 1 ================= */
+async function analyse(){
+  const b=$("go");b.disabled=true;b.textContent="Having a look…";
+  $("money").classList.add("hidden");$("oout").innerHTML="";
+  $("out").innerHTML='<div class="msg info"><span class="spin"></span>Reading the chart and checking the news…</div>';
+  const md=marketData();
+  const prompt=RULES+"\n\nMARKET DATA:\n"+JSON.stringify(md,null,1)+
+    "\n\nDo one quick search for gold news from the last two days, then answer straight away. Keep the search brief — the JSON answer matters more than a long search.";
+  const noSearchPrompt=RULES+"\n\nMARKET DATA:\n"+JSON.stringify(md,null,1)+
+    '\n\nDon\'t search. Work from the supplied data only and set news to "not checked this time".';
+  const tools=[{type:"web_search_20250305",name:"web_search",max_uses:2}];
+  const baseModel=MODEL;
+  try{
+    let msgs=[{role:"user",content:prompt}];
+    let res=await ask({model:baseModel,max_tokens:4096,tools,messages:msgs});
+
+    // Web search runs as a loop on Anthropic's servers (it issues searches, reads
+    // pages, then writes the answer). If that loop hits its step limit mid-way,
+    // the API sends back stop_reason "pause_turn" — a genuinely unfinished turn,
+    // not a token-limit problem. The fix is to send it straight back and let it
+    // continue, not to ask again from scratch.
+    let continues=0;
+    while(res.stopReason==="pause_turn"&&continues<2){
+      continues++;
+      $("out").innerHTML='<div class="msg info"><span class="spin"></span>Still searching — picking back up…</div>';
+      msgs=msgs.concat([{role:"assistant",content:res.raw.content}]);
+      res=await ask({model:baseModel,max_tokens:4096,tools,messages:msgs});
+    }
+    if(res.stopReason==="pause_turn"){
+      throw new Error("The news search kept going and didn't wrap up in time. Press Analyse again — it usually finishes on the next try.");
+    }
+
+    // If it ran out of writing room, drop search (that alone frees up a lot of
+    // room) and retry without it — stepping the budget up each time, rather than
+    // guessing one fixed number, in case the answer itself just runs long.
+    if(res.stopReason==="max_tokens"){
+      const budgets=[3000,6000,8192];
+      for(let i=0;i<budgets.length&&res.stopReason==="max_tokens";i++){
+        $("out").innerHTML='<div class="msg info"><span class="spin"></span>That ran long — trying again with more room'+(i>0?" ("+(i+1)+")":"")+"…</div>";
+        res=await ask({model:baseModel,max_tokens:budgets[i],messages:[{role:"user",content:noSearchPrompt}]});
+      }
+      if(res.stopReason==="max_tokens"){
+        throw new Error("Kept running out of room even with plenty to spare — that's unusual. Press Analyse again, and if it keeps happening tell Claude.");
+      }
+    }
+    verdict=grabJSON(res.text);
+    showVerdict(verdict);drawPlan(verdict);logCall(verdict,md);
+    $("money").classList.remove("hidden");
+    $("money").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){
+    $("out").innerHTML='<div class="msg err"><b>That didn\'t work.</b><br>'+esc(e.message).replace(/\n/g,"<br>")+
+      '<br><br>If it says "failed to fetch", the file needs serving rather than opening straight from the folder.</div>';
+  }finally{b.disabled=false;b.textContent="Analyse gold now";}
+}
+function watchCard(label,orderType,col,w){
+  if(!w)return"";
+  const risk=Math.abs(w.entry-w.stop),rr=w.target?Math.abs(w.target-w.entry)/risk:null;
+  return '<div class="reason" style="border-top:2px solid '+col+'">'+
+    '<h4 style="color:'+col+'">'+label+' — '+orderType+'</h4>'+
+    '<div class="plan" style="margin-top:8px">'+
+      '<div class="fact"><div class="fact-k">Order at</div><div class="fact-v num">'+w.entry.toFixed(2)+"</div></div>"+
+      '<div class="fact"><div class="fact-k">Stop</div><div class="fact-v num" style="color:var(--down)">'+w.stop.toFixed(2)+"</div></div>"+
+      (w.target?'<div class="fact"><div class="fact-k">Target</div><div class="fact-v num" style="color:var(--up)">'+w.target.toFixed(2)+"</div></div>":"")+
+    "</div>"+
+    (rr?'<p style="font-size:12.5px;color:var(--faint);margin-top:8px">Reward vs risk '+rr.toFixed(1)+" to 1</p>":"")+
+    (w.note?'<p style="font-size:14px;color:#DACEC0;margin-top:6px">'+esc(w.note)+"</p>":"")+
+  "</div>";
+}
+function showVerdict(v){
+  const w={LONG:"BUY",SHORT:"SHORT",STAND_ASIDE:"WAIT"};
+  const bars=[1,2,3,4,5].map(i=>'<i class="'+(i<=(v.sure||0)?"on":"")+'"></i>').join("");
+  let plan="";
+  if(v.entry&&v.stop){
+    const risk=Math.abs(v.entry-v.stop),rr=v.target?Math.abs(v.target-v.entry)/risk:null;
+    plan='<div class="plan">'+
+      '<div class="fact"><div class="fact-k">Entry</div><div class="fact-v num">'+v.entry.toFixed(2)+"</div></div>"+
+      '<div class="fact"><div class="fact-k">Stop</div><div class="fact-v num" style="color:var(--down)">'+v.stop.toFixed(2)+"</div></div>"+
+      (v.target?'<div class="fact"><div class="fact-k">Target</div><div class="fact-v num" style="color:var(--up)">'+v.target.toFixed(2)+"</div></div>":"")+
+      (rr?'<div class="fact"><div class="fact-k">Reward vs risk</div><div class="fact-v num">'+rr.toFixed(1)+" to 1</div></div>":"")+"</div>";
+  }
+  let watch="";
+  if(v.call==="STAND_ASIDE"&&(v.watch_long||v.watch_short)){
+    const cards=watchCard("If it pulls back","buy limit order","var(--bull)",v.watch_long)+
+                watchCard("If it breaks down","sell stop order","var(--bear)",v.watch_short);
+    watch='<div class="reasons" style="margin-top:16px">'+cards+"</div>";
+  }
+  $("out").innerHTML='<div class="card"><div class="card-bd">'+
+    '<div class="call-row"><div class="call '+v.call+'">'+(w[v.call]||v.call)+"</div>"+
+    '<div class="sure"><span class="sure-t">How sure</span><div class="bars">'+bars+"</div></div></div>"+
+    (v.headline?'<p style="font-size:16px;color:#DACEC0;margin-top:6px">'+esc(v.headline)+"</p>":"")+plan+watch+
+    '<div class="reasons"><div class="reason b"><h4>Long side</h4><p>'+esc(v.up_case||"—")+"</p></div>"+
+    '<div class="reason s"><h4>Short side</h4><p>'+esc(v.down_case||"—")+"</p></div></div>"+
+    '<div class="note"><h4>This is wrong if…</h4><p>'+esc(v.wrong_if||"—")+"</p></div>"+
+    '<div class="note plain"><h4>News</h4><p>'+esc(v.news||"—")+
+      (v.event?' <span style="color:var(--warn)">'+esc(v.event)+"</span>":"")+"</p></div></div></div>";
+}
+
+/* ================= step 2 ================= */
+async function explain(){
+  if(!verdict)return;
+  const stake=+$("stake").value||0;
+  if(!stake){$("oout").innerHTML='<div class="msg err">Put in how much first.</div>';return;}
+
+  // Not in a trade yet, and it said wait — work off the conditional orders
+  // (buy limit / sell stop) instead of a live entry, if there are any.
+  if(posState==="flat"&&verdict.call==="STAND_ASIDE"){
+    const sides=[];
+    if(verdict.watch_long)sides.push({label:"If it pulls back and you get filled on the buy limit",w:verdict.watch_long,sgn:1});
+    if(verdict.watch_short)sides.push({label:"If it breaks down and you get filled on the sell stop",w:verdict.watch_short,sgn:-1});
+    if(!sides.length){$("oout").innerHTML='<div class="msg info">Nothing worth planning for yet — it said wait and there\'s no clean level either side right now.</div>';return;}
+
+    const b=$("explain");b.disabled=true;b.textContent="Working it out…";
+    $("oout").innerHTML='<div class="msg info"><span class="spin"></span>Working out what each side would mean…</div>';
+    const calc=sides.map(s=>{
+      const oz=stake/s.w.entry,loss=oz*(s.w.entry-s.w.stop)*s.sgn,gain=s.w.target?oz*(s.w.target-s.w.entry)*s.sgn:null;
+      return Object.assign({},s,{loss:+Math.abs(loss).toFixed(2),gain:gain?+Math.abs(gain).toFixed(2):null});
+    });
+    try{
+      const facts={stake_dollars:stake,timeframe:tf,sides:calc.map(c=>({order:c.label,entry:c.w.entry,stop:c.w.stop,target:c.w.target,lose_if_stopped:c.loss,make_if_target:c.gain}))};
+      const r2=await ask({model:MODEL,max_tokens:500,messages:[{role:"user",content:
+        "You talk to a retail gold trader who knows the basics. Normal sentences, no bullet points, no disclaimers.\n\nHe hasn't entered anything yet — these are pending orders sitting on the book. For each side in the data, write exactly one short sentence on whether putting $"+stake+" behind it is sensible sizing.\n\nNUMBERS:\n"+
+        JSON.stringify(facts,null,1)+"\n\nReply with just the sentences, one per side, same order as given. No headers, no labels."}]});
+      const lines=r2.text.trim().split("\n").filter(l=>l.trim());
+      $("oout").innerHTML='<div style="margin-top:12px">'+calc.map((c,i)=>
+        '<div style="margin-bottom:'+(i<calc.length-1?"16px":"0")+'">'+
+        '<div style="font-size:13px;color:var(--soft);margin-bottom:8px;font-weight:600">'+esc(c.label)+"</div>"+
+        '<div class="oc"><div class="o bad"><div class="o-k">If it stops out</div><div class="o-v">'+money(-c.loss)+
+          '</div><div class="o-s">'+(c.loss/stake*100).toFixed(0)+"% of your $"+stake+"</div></div>"+
+        (c.gain?'<div class="o good"><div class="o-k">If it hits target</div><div class="o-v">+$'+c.gain.toFixed(2)+
+          '</div><div class="o-s">'+(c.gain/stake*100).toFixed(0)+"% of your $"+stake+"</div></div>":"")+"</div>"+
+        (lines[i]?'<p style="font-size:14px;color:#DACEC0;margin-top:8px">'+esc(lines[i])+"</p>":"")+
+        "</div>"
+      ).join("")+"</div>";
+    }catch(e){$("oout").innerHTML='<div class="msg err">'+esc(e.message)+"</div>";}
+    finally{b.disabled=false;b.textContent="Show me what happens";}
+    return;
+  }
+
+  const entry=posState==="flat"?verdict.entry:(+$("entry").value||null);
+  if(posState!=="flat"&&!entry){$("oout").innerHTML='<div class="msg err">Put in the price you got in at.</div>';return;}
+  if(!entry||!verdict.stop){$("oout").innerHTML='<div class="msg info">No trade to work out — it said wait.</div>';return;}
+
+  const dir=posState==="flat"?(verdict.call==="SHORT"?"short":"long"):posState;
+  const oz=stake/entry,stop=verdict.stop,tgt=verdict.target,sgn=dir==="short"?-1:1;
+  const loss=oz*(entry-stop)*sgn,gain=tgt?oz*(tgt-entry)*sgn:null,nowPL=oz*(lastPx-entry)*sgn;
+
+  const b=$("explain");b.disabled=true;b.textContent="Working it out…";
+  $("oout").innerHTML='<div class="msg info"><span class="spin"></span>Working out what this means for you…</div>';
+  const facts={the_call:verdict.call,you_are:posState==="flat"?"not in yet":"already "+posState,
+    stake_dollars:stake,entry:entry,price_now:lastPx,stop:stop,target:tgt,
+    lose_if_stopped:+Math.abs(loss).toFixed(2),make_if_target:gain?+Math.abs(gain).toFixed(2):null,
+    open_pnl_now:+nowPL.toFixed(2),atr14:atr(candles)?+atr(candles).toFixed(2):null,
+    unfilled_gaps:fvgs(candles),timeframe:tf};
+  const p2=posState==="flat"
+    ?`Write 3 to 5 sentences on what putting $${stake} into this actually means for him. What he loses if stopped, what he makes if it works, whether that size makes sense, and roughly how long this takes on the ${tf} given the ATR. If losing that would hurt, say it straight.`
+    :`He is ALREADY ${posState} with $${stake} in from ${entry}. Write 3 to 5 sentences on what to do now — hold, cut, take part off, or move the stop, and to exactly what price. Be decisive.`;
+  try{
+    const r2=await ask({model:MODEL,max_tokens:600,messages:[{role:"user",content:
+      "You talk to a retail gold trader who knows the basics. Normal sentences, no bullet points, no disclaimers, no hedging.\n\nNUMBERS:\n"+
+      JSON.stringify(facts,null,1)+"\n\n"+p2+"\n\nReply with just the sentences."}]});
+    const txt=r2.text;
+    $("oout").innerHTML='<div style="margin-top:12px"><div class="oc">'+
+      '<div class="o bad"><div class="o-k">'+(posState==="flat"?"If it stops out":"If your stop hits")+
+        '</div><div class="o-v">'+money(-Math.abs(loss))+'</div><div class="o-s">'+(Math.abs(loss)/stake*100).toFixed(0)+"% of your $"+stake+"</div></div>"+
+      (gain?'<div class="o good"><div class="o-k">If it hits target</div><div class="o-v">+$'+Math.abs(gain).toFixed(2)+
+        '</div><div class="o-s">'+(Math.abs(gain)/stake*100).toFixed(0)+"% of your $"+stake+"</div></div>":"")+"</div>"+
+      (posState!=="flat"?'<div class="o '+(nowPL>=0?"good":"bad")+'" style="margin-top:12px"><div class="o-k">Where you are now</div><div class="o-v">'+
+        (nowPL>=0?"+$":"-$")+Math.abs(nowPL).toFixed(2)+"</div></div>":"")+
+      '<div class="note plain" style="margin-top:12px"><h4>'+(posState==="flat"?"What this means":"What to do now")+
+        "</h4><p>"+esc(txt.trim())+"</p></div></div>";
+  }catch(e){$("oout").innerHTML='<div class="msg err">'+esc(e.message)+"</div>";}
+  finally{b.disabled=false;b.textContent="Show me what happens";}
+}
+
+/* ================= track record ================= */
+const readJ=()=>{try{return JSON.parse(localStorage.getItem(LSJ)||"[]");}catch(e){return[];}};
+const writeJ=j=>localStorage.setItem(LSJ,JSON.stringify(j.slice(-200)));
+function logCall(v,md){
+  const j=readJ();
+  j.push({ts:Date.now(),tf:md.timeframe,px:md.price_now,call:v.call,sure:v.sure,
+    entry:v.entry,stop:v.stop,target:v.target,hz:HZ[md.timeframe],k:K,result:null,r:null});
+  writeJ(j);paintHist();
+}
+async function grade(){
+  const j=readJ();let dirty=false;
+  for(const e of j){
+    if(e.result||Date.now()<e.ts+e.hz)continue;
+    if(e.call==="STAND_ASIDE"||!e.entry||!e.stop){e.result="flat";e.r=0;dirty=true;continue;}
+    try{
+      const ek=e.k||1;
+      const bars=(await getK("1m",1000,e.ts))
+        .filter(b=>b.time*1000<=e.ts+e.hz)
+        .map(b=>({time:b.time,high:b.high*ek,low:b.low*ek,close:b.close*ek}));
+      if(!bars.length)continue;
+      const long=e.call==="LONG",risk=Math.abs(e.entry-e.stop);let out=null;
+      for(const b of bars){
+        if(long?b.low<=e.stop:b.high>=e.stop){out={result:"loss",r:-1};break;}
+        if(e.target&&(long?b.high>=e.target:b.low<=e.target)){out={result:"win",r:+(Math.abs(e.target-e.entry)/risk).toFixed(2)};break;}
+      }
+      if(!out){
+        const fin=bars[bars.length-1].close,mv=(long?fin-e.entry:e.entry-fin)/risk;
+        out={result:mv>.2?"win":mv<-.2?"loss":"flat",r:+mv.toFixed(2)};
+      }
+      e.result=out.result;e.r=out.r;dirty=true;
+    }catch(err){}
+  }
+  if(dirty)writeJ(j);
+  paintHist();
+}
+function paintHist(){
+  const j=readJ().slice().reverse();
+  const sc=j.filter(e=>e.result&&e.call!=="STAND_ASIDE");
+  const w=sc.filter(e=>e.result==="win").length,l=sc.filter(e=>e.result==="loss").length;
+  const totR=sc.reduce((s,e)=>s+(e.r||0),0);
+  $("dots").innerHTML=j.slice(0,20).reverse().map(e=>{
+    const c=!e.result?"":e.result==="win"?"win":e.result==="loss"?"loss":e.call==="STAND_ASIDE"?"wait":"flat";
+    return '<span class="dot '+c+'" title="'+e.call+" "+new Date(e.ts).toLocaleString()+'"></span>';}).join("");
+  if(sc.length){
+    const pct=(w/sc.length*100).toFixed(0),cash=totR*10;
+    $("record").innerHTML="<b>"+w+" right, "+l+" wrong</b> ("+pct+"%) · risking $10 a time you'd be <b style=\"color:"+
+      (cash>=0?"var(--up)":"var(--down)")+'">'+(cash>=0?"+$":"-$")+Math.abs(cash).toFixed(2)+"</b>"+(sc.length<20?" · still early":"");
+  }else $("record").textContent=j.length?j.length+" saved, none scored yet":"Nothing scored yet";
+  if(!j.length){
+    $("hist").innerHTML='<div class="empty">Every call gets saved here, then checked later against what gold actually did. After a few weeks this tells you whether any of it is worth listening to.</div>';
+    return;
+  }
+  $("hist").innerHTML='<div class="hist">'+j.slice(0,25).map(e=>{
+    const w2={LONG:"BUY",SHORT:"SHORT",STAND_ASIDE:"WAIT"},res=e.result||"pending";
+    const t=e.result==="win"?"Right":e.result==="loss"?"Wrong":e.result==="flat"?"Nothing happened"
+      :(Date.now()<e.ts+e.hz?"scores in "+dur(e.ts+e.hz-Date.now()):"scoring…");
+    return '<div class="h-row"><span class="h-call '+e.call+'">'+(w2[e.call]||e.call)+"</span>"+
+      '<span class="h-when">'+new Date(e.ts).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+"</span>"+
+      '<span class="h-px">'+e.tf+" · "+(e.px?e.px.toFixed(2):"-")+"</span>"+
+      '<span class="h-res '+res+'">'+t+"</span></div>";}).join("")+"</div>";
+}
+
+/* ================= tradingview embeds ================= */
+const TV_IV={"1m":"1","5m":"5","15m":"15","1h":"60","4h":"240","1d":"D"};
+let tvSym="OANDA:XAUUSD",view="live";
+function embed(host,src,cfg){
+  host.innerHTML='<div class="tradingview-widget-container" style="height:100%;width:100%">'+
+    '<div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>';
+  const s=document.createElement("script");
+  s.src=src;s.async=true;s.type="text/javascript";
+  s.innerHTML=JSON.stringify(cfg);
+  host.firstChild.appendChild(s);
+}
+function mountTV(){
+  embed($("tvhost"),"https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js",{
+    autosize:true,symbol:tvSym,interval:TV_IV[tf]||"15",timezone:"Europe/London",
+    theme:"dark",style:"1",locale:"en",backgroundColor:"#1B1C21",gridColor:"rgba(255,255,255,0.04)",
+    hide_side_toolbar:false,allow_symbol_change:true,withdateranges:true,
+    support_host:"https://www.tradingview.com"});
+}
+function mountCal(){
+  embed($("calhost"),"https://s3.tradingview.com/external-embedding/embed-widget-events.js",{
+    colorTheme:"dark",isTransparent:true,locale:"en",countryFilter:"us,gb,eu",
+    importanceFilter:"0,1",width:"100%",height:380});
+}
+function setView(v){
+  view=v;
+  document.querySelectorAll("#vtog button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  $("liveview").classList.toggle("hidden",v!=="live");
+  $("tvview").classList.toggle("hidden",v!=="tv");
+  $("lvbtn").style.display=v==="live"?"":"none";
+  if(v==="tv")mountTV();
+  else chart.applyOptions({width:$("chart").clientWidth});
+}
+
+/* ================= boot ================= */
+function boot(){
+  if(typeof LightweightCharts==="undefined"){
+    document.body.innerHTML='<div style="padding:40px;font-family:sans-serif"><h2>Chart didn\'t load</h2><p style="color:#B7A794;margin-top:8px">Needs internet to fetch the chart library. Check connection and reload.</p></div>';
+    return;
+  }
+  chart=LightweightCharts.createChart($("chart"),{
+    layout:{background:{color:"#1B1C21"},textColor:"#8E94A3",fontFamily:"Manrope, sans-serif",fontSize:11},
+    grid:{vertLines:{color:"rgba(255,255,255,.04)"},horzLines:{color:"rgba(255,255,255,.04)"}},
+    rightPriceScale:{borderVisible:false},
+    timeScale:{borderVisible:false,timeVisible:true,secondsVisible:false},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal,
+      vertLine:{color:"#5E6470",labelBackgroundColor:"#4C9AF5"},
+      horzLine:{color:"#5E6470",labelBackgroundColor:"#4C9AF5"}}
+  });
+  series=chart.addCandlestickSeries({
+    upColor:"#4C9AF5",   borderUpColor:"#4C9AF5",   wickUpColor:"#3B7FCC",
+    downColor:"#22242B", borderDownColor:"#8E94A3", wickDownColor:"#8E94A3"
+  });
+  new ResizeObserver(()=>chart.applyOptions({width:$("chart").clientWidth})).observe($("chart"));
+  chart.applyOptions({width:$("chart").clientWidth});
+
+  document.querySelectorAll(".pill").forEach(b=>b.onclick=()=>{
+    loadTF(b.dataset.tf);
+    if(view==="tv")mountTV();
+  });
+  document.querySelectorAll("#vtog button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+  document.querySelectorAll("#stog button").forEach(b=>b.onclick=()=>{
+    scaleMode=b.dataset.s;
+    document.querySelectorAll("#stog button").forEach(x=>x.classList.toggle("on",x===b));
+    loadTF(tf);
+  });
+  setInterval(()=>{fetchSpot();},12e4);
+  document.querySelectorAll(".tvp").forEach(b=>b.onclick=()=>{
+    tvSym=b.dataset.sym;
+    document.querySelectorAll(".tvp").forEach(x=>x.classList.toggle("on",x===b));
+    mountTV();
+  });
+  mountCal();
+  $("lvbtn").onclick=()=>{
+    showLevels=!showLevels;
+    $("lvbtn").classList.toggle("on",showLevels);
+    $("lvbtn").textContent=showLevels?"Levels on":"Levels off";
+    drawLevels();
+  };
+  document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{
+    posState=b.dataset.st;
+    document.querySelectorAll("#seg button").forEach(x=>x.className="");
+    b.className="on "+(posState==="long"?"l":posState==="short"?"s":"");
+    $("entryF").classList.toggle("hidden",posState==="flat");
+    $("lblStake").textContent=posState==="flat"?"How much are you putting in?":"How much have you got in?";
+    $("oout").innerHTML="";
+  });
+  $("go").onclick=analyse;
+  $("explain").onclick=explain;
+  $("regrade").onclick=grade;
+  $("wipe").onclick=()=>{if(confirm("Delete the whole track record? That's the bit that tells you if this works."))
+    {localStorage.removeItem(LSJ);paintHist();}};
+  paintHist();
+  paintSessions();setInterval(paintSessions,2e4);
+  loadTF("15m").then(()=>grade());
+  tick();
+  setInterval(grade,6e5);
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{/* fine if this fails, app still works */});
+  }
+}
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",boot):boot();
+</script>
+</body>
+</html>
